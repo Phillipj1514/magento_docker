@@ -19,9 +19,10 @@ docker-compose up -d
 
 ## 3 install magento
 
-`
+```
 docker exec -it (foldername)_php_(number instance) /install
-`
-`
-eg  .docker exec -it magento_docker_php_1 /install
-` 
+
+eg  
+
+docker exec -it magento_docker_php_1 /install
+``` 
