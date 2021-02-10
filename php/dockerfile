@@ -1,0 +1,31 @@
+FROM  php:7.4-fpm
+
+# Installing packages needed for the php extensions
+RUN apt-get update -y && apt-get install -y zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev\
+    libicu-dev libxml2-dev libxslt1-dev libzip-dev \
+    unzip vim sed gzip lsof tar cron
+
+# Install php gd
+RUN docker-php-ext-configure gd \
+    --with-jpeg=/usr/include/ \
+    --with-freetype=/usr/include/
+
+RUN docker-php-ext-install -j$(nproc) gd  
+
+# Install the other php extensions
+RUN docker-php-ext-install bcmath ctype pdo_mysql sockets \
+    intl soap xsl zip
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=1.10.20
+
+COPY configs/php.ini /usr/local/etc/php/php.ini
+
+COPY configs/auth.json /root/.composer/auth.json
+# Copy over the installation files
+
+COPY scripts/install /
+COPY scripts/update /
+
+RUN chmod +x /install
+RUN chmod +x /update

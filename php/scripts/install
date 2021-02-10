@@ -1,0 +1,51 @@
+#!/bin/bash
+echo "Downloading Files from Composer"
+
+DIR="/var/www/html/website"
+# init
+# look for empty dir 
+if [ "$(ls -A $DIR)" ]; then
+     echo "Skipping Download"
+else
+    composer create-project --repository=https://repo.magento.com/ magento/project-community-edition /var/www/html/website/.
+fi
+
+
+echo "change to the install location"
+cd /var/www/html/website
+
+echo "Set file permissions"
+find var generated vendor pub/static pub/media app/etc -type f -exec chmod g+w {} +
+find var generated vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} +
+chown -R :www-data . # Ubuntu
+chmod u+x bin/magento
+
+echo "Install Magento"
+bin/magento setup:install \
+--base-url=http://localhost:8080 \
+--db-host=db \
+--db-name=magento \
+--db-user=magento \
+--db-password=magento \
+--backend-frontname=admin \
+--admin-firstname=admin \
+--admin-lastname=admin \
+--admin-email=phillipjunior95@gmail.com \
+--admin-user=admin2 \
+--admin-password=admin123 \
+--language=en_US \
+--currency=USD \
+--timezone=America/Jamaica \
+--use-rewrites=1 \
+--elasticsearch-host=es01 \
+--amqp-host=rabbitmq \
+--amqp-user=magento \
+--amqp-password=magento123
+
+echo "start cron"
+bin/magento cron:install
+crontab -l
+bin/magento indexer:reindex
+bin/magento cache:flush
+
+echo "installation complete" 

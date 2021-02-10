@@ -1,0 +1,101 @@
+# Created by: Lewiking
+# Github: https://github.com/Phillipj1514
+version: "3.9"
+
+services:
+
+  web:
+    image: nginx:1
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+        - magento_web:/var/www/html/website
+        - ./nginx/configs/magento.conf:/etc/nginx/conf.d/magento.conf
+        # - ./nginx/configs/server.conf:/etc/nginx/conf.d/default.conf
+    depends_on: 
+      - php
+    networks: 
+      - web
+
+  php:
+    build: php/.
+    image: magento_php:latest
+    volumes:
+        - magento_web:/var/www/html/website
+        - ./magento/themes:/var/www/html/website/app/design
+        - ./magento/modules:/var/www/html/website/app/code
+        - ./magento/scripts/install_extra:/install_extra
+    depends_on:
+      - db
+    networks: 
+      - database
+      - web
+
+  db:
+    image: mysql:8
+    restart: always
+    volumes: 
+      - magento_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: notSecureChangeMe
+      MYSQL_DATABASE: magento
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento_tochange
+    networks: 
+      - database
+  
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8082:80
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: notSecureChangeMe
+    depends_on: 
+      - php
+      - db
+    networks: 
+      - database
+
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+    restart: always
+    ports: 
+      - 9200:9200
+      - 9300:9300
+    environment:
+      discovery.type: single-node
+    volumes:
+      - magento_e01:/usr/share/elasticsearch/data
+    networks: 
+      - web
+
+  rabbitmq:
+    image: rabbitmq:management
+    expose: 
+      - "5672"
+    environment: 
+      RABBITMQ_DEFAULT_USER: magento
+      RABBITMQ_DEFAULT_PASS: magento123
+    depends_on: 
+      - php
+    networks: 
+      - web
+
+
+# The internal volumes
+volumes:
+  magento_web:
+  magento_data:
+  magento_e01:
+
+networks:
+    database: 
+    web:
+
+
+
+      

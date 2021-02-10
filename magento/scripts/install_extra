@@ -1,0 +1,21 @@
+#!/bin/bash
+cd /var/www/html/website
+
+echo "Installing additional theme and extensions for magento"
+echo "Installing Themes"
+# composer require mod:ver
+
+echo "Installing extensions"
+composer require magento/module-amazon:4.3
+
+
+echo "updating magento"
+composer update
+bin/magento setup:upgrade
+bin/magento setup:di:compile
+bin/magento setup:static-content:deploy  
+bin/magento indexer:reindex
+bin/magento cache:flush
+bin/magento cache:clean
+
+echo "installation complete"
